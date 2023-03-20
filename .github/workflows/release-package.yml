@@ -16,6 +16,10 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -27,3 +31,4 @@ jobs:
         with:
           push: true
           tags: ghcr.io/ibm-hyper-protect/k8s-operator-hpcr:latest
+          platforms: linux/amd64,linux/s390x
