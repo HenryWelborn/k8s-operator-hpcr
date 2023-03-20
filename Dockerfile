@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.package datasource
 
-FROM golang as build_layer
+FROM registry.access.redhat.com/ubi8/go-toolset as build_layer
 
 COPY . /src
 
 RUN cd /src && \
-    mkdir -p /build && \
-    go build -ldflags "-X github.com/ibm-hyper-protect/k8s-operator-hpcr/cli.compiled=$(date +%s) -s -w" -o /build/k8s-operator-hpcr main.go && \
-    ldd /build/k8s-operator-hpcr | tr -s '[:blank:]' '\n' | grep '^/' | xargs -I % sh -c 'mkdir -p $(dirname /build/deps%); cp % /build/deps%;'
-    
+    mkdir -p /opt/app-root/bin && \
+    go build -ldflags "-X github.com/ibm-hyper-protect/k8s-operator-hpcr/cli.compiled=$(date +%s) -s -w" -o /opt/app-root/bin/k8s-operator-hpcr main.go && \
+    ldd /opt/app-root/bin/k8s-operator-hpcr | tr -s '[:blank:]' '\n' | grep '^/' | xargs -I % sh -c 'mkdir -p $(dirname /opt/app-root/bin%); cp % /opt/app-root/bin%;'    
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal as base_layer
 
@@ -30,8 +29,7 @@ COPY --from=base_layer /etc/ssl/certs/ /etc/ssl/certs/
 COPY --from=base_layer /etc/pki/tls/ /etc/pki/tls/
 COPY --from=base_layer /etc/pki/ca-trust/ /etc/pki/ca-trust/
 
-COPY --from=build_layer /build/deps /
-COPY --from=build_layer /build/k8s-operator-hpcr /k8s-operator-hpcr
+COPY --from=build_layer /opt/app-root/bin /
 
 EXPOSE 8080
 
